@@ -6,7 +6,7 @@ use std::{boxed::Box, vec::Vec};
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum AuthorizationList {
-    Signed(Vec<SignedAuthorization<Signature>>),
+    Signed(Vec<SignedAuthorization>),
     Recovered(Vec<RecoveredAuthorization>),
 }
 
@@ -27,9 +27,11 @@ impl AuthorizationList {
     /// Returns iterator of recovered Authorizations.
     pub fn recovered_iter<'a>(&'a self) -> Box<dyn Iterator<Item = RecoveredAuthorization> + 'a> {
         match self {
-            Self::Signed(signed) => {
-                Box::new(signed.iter().map(|signed| signed.clone().into_recovered()))
-            }
+            Self::Signed(signed) => Box::new(
+                signed
+                    .iter()
+                    .map(|signed| signed.clone().try_into_recovered().unwrap()),
+            ),
             Self::Recovered(recovered) => Box::new(recovered.clone().into_iter()),
         }
     }
